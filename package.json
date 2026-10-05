@@ -1,0 +1,20 @@
+{
+  "name": "floorplan-annotator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "展馆平面图协作标注：SVG 缩放平移、多边形风险区域、版本并发控制、整图 JSON 导入导出",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node test/smoke.js",
+    "smoke": "node test/smoke.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "busboy": "^1.6.0"
+  }
+}

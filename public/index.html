@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>展馆平面图协作标注</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="brand">🏛 展馆平面图标注</div>
+    <nav id="tabs" class="tabs"></nav>
+    <div class="top-actions">
+      <label class="btn primary">
+        上传 PNG/JPEG
+        <input id="uploadInput" type="file" accept="image/png,image/jpeg" hidden />
+      </label>
+      <button id="importBtn" class="btn" title="导入整图 JSON（会替换库中同 ID 的图）">导入 JSON</button>
+      <input id="importInput" type="file" accept="application/json,.json" hidden />
+    </div>
+  </header>
+
+  <div id="workspace">
+    <aside id="sidebar">
+      <section id="mapListSection">
+        <h3>展馆图列表</h3>
+        <ul id="mapList" class="map-list"></ul>
+      </section>
+
+      <section id="inspector" class="hidden">
+        <h3>区域属性</h3>
+        <div id="inspectorBody"></div>
+      </section>
+
+      <section id="legend">
+        <h3>风险图例</h3>
+        <ul class="legend">
+          <li><span class="dot risk-low"></span>低风险</li>
+          <li><span class="dot risk-medium"></span>中风险</li>
+          <li><span class="dot risk-high"></span>高风险</li>
+        </ul>
+        <p class="hint">所有顶点按<strong>原图像素坐标</strong>保存，缩放/平移不影响存储位置。</p>
+      </section>
+    </aside>
+
+    <main id="canvasWrap">
+      <div id="toolbar">
+        <button id="toolPan" class="tool active" title="平移 (V)">✋ 平移</button>
+        <button id="toolDraw" class="tool" title="绘制多边形 (P)">✏️ 绘制</button>
+        <button id="btnZoomIn" title="放大">＋</button>
+        <button id="btnZoomOut" title="缩小">－</button>
+        <button id="btnFit" title="适应窗口 (F)">适应</button>
+        <button id="btn100" title="1:1 实际像素">1:1</button>
+        <span class="spacer"></span>
+        <button id="exportBtn" class="btn" disabled>导出整图 JSON</button>
+        <button id="deleteMapBtn" class="btn danger subtle" disabled>删除此图</button>
+      </div>
+
+      <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+            <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#e3e8ef" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <rect id="bgRect" x="-100000" y="-100000" width="200000" height="200000" fill="#eef1f5"/>
+        <g id="viewport">
+          <rect id="gridRect" fill="url(#grid)"></rect>
+          <image id="mapImage" href="" x="0" y="0" preserveAspectRatio="none"></image>
+          <g id="regionsLayer"></g>
+          <g id="draftLayer"></g>
+          <g id="overlayLayer"></g>
+        </g>
+      </svg>
+
+      <div id="emptyHint" class="empty-hint">
+        <div class="card">
+          <h2>还没有展馆图</h2>
+          <p>点击右上角 <strong>上传 PNG/JPEG</strong>，或导入之前导出的整图 JSON。</p>
+          <p class="muted">数据仅保存在本机 SQLite，无需任何第三方账号。</p>
+        </div>
+      </div>
+
+      <div id="drawHint" class="draw-hint hidden">
+        绘制中：单击添加顶点，双击或按 <kbd>Enter</kbd> 闭合；<kbd>Esc</kbd> 取消，<kbd>⌫</kbd> 撤销顶点
+      </div>
+      <div id="statusbar">
+        <span id="statusCoords">原图坐标：—</span>
+        <span id="statusZoom">缩放：—</span>
+        <span id="statusVersion"></span>
+        <span id="statusConn" class="conn">●</span>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toastHost"></div>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

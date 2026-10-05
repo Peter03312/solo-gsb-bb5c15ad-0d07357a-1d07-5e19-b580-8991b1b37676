@@ -1,0 +1,23 @@
+services:
+  floorplan:
+    build: .
+    image: floorplan-annotator:latest
+    container_name: floorplan-annotator
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      PORT: "8080"
+      HOST: "0.0.0.0"
+      DB_PATH: /data/floorplan.db
+      MAX_UPLOAD_MB: "${MAX_UPLOAD_MB:-100}"
+    volumes:
+      - floorplan-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  floorplan-data:
