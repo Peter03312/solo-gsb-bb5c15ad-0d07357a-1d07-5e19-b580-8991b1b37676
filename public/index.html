@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>展馆平面图协作标注</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand" id="brand">
+      <span class="logo">▱</span> 展馆平面图协作标注
+      <span class="tagline">本地运行 · SQLite · 原图坐标存储</span>
+    </div>
+    <div class="top-actions" id="topActions"></div>
+  </header>
+
+  <!-- ============ 列表视图 ============ -->
+  <main id="view-list" class="view">
+    <section class="cards">
+      <div class="card">
+        <h2>上传平面图</h2>
+        <p class="muted">支持 PNG / JPEG。上传后即可多人同时标注，原图与标注保存在服务器数据目录。</p>
+        <form id="uploadForm" class="form">
+          <label>名称（可选，默认用文件名）
+            <input type="text" id="upName" maxlength="200" placeholder="例如：3号馆一层">
+          </label>
+          <label>图片文件 <span class="req">*</span>
+            <input type="file" id="upFile" accept="image/png,image/jpeg" required>
+          </label>
+          <button type="submit" class="btn primary">上传并打开</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>导入整图 JSON</h2>
+        <p class="muted">导入此前导出的整图备份：尺寸、区域、编号、风险等级与所有版本号原样恢复。同名平面图不会被覆盖。</p>
+        <form id="importForm" class="form">
+          <label>导入后名称（可选，默认用导出包中的名称）
+            <input type="text" id="importName" maxlength="200" placeholder="留空则使用原名称">
+          </label>
+          <label>导出的 JSON 文件 <span class="req">*</span>
+            <input type="file" id="importFile" accept="application/json,.json" required>
+          </label>
+          <button type="submit" class="btn">导入并打开</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>已有的平面图</h2>
+      <table class="plan-table">
+        <thead>
+          <tr><th>ID</th><th>名称</th><th>尺寸(px)</th><th>区域数</th><th>版本</th><th>更新时间</th><th>操作</th></tr>
+        </thead>
+        <tbody id="planList"></tbody>
+      </table>
+      <p id="emptyHint" class="muted hidden">还没有平面图，先上传一张吧。</p>
+    </section>
+  </main>
+
+  <!-- ============ 编辑器视图 ============ -->
+  <main id="view-editor" class="view hidden">
+    <aside class="panel">
+      <div class="panel-section">
+        <button class="btn link" id="btnBack">← 返回列表</button>
+        <h2 id="planTitle">—</h2>
+        <div class="meta-row">
+          <span id="planSize" class="badge"></span>
+          <span id="planVersion" class="badge"></span>
+          <span id="collabHint" class="badge live hidden">● 检测到他人更新</span>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="toolbar">
+          <button class="btn primary" id="btnDraw">✎ 绘制新区域</button>
+          <button class="btn" id="btnZoomIn">＋</button>
+          <button class="btn" id="btnZoomOut">－</button>
+          <button class="btn" id="btnFit" title="适应窗口">适应</button>
+          <button class="btn" id="btn100">1:1</button>
+        </div>
+        <p class="hint" id="drawHint">
+          操作：滚轮缩放 · 拖空白处平移 · 点击区域选中编辑。<br>
+          绘制：单击添加顶点，双击或回车完成，Esc 取消。
+        </p>
+      </div>
+
+      <div class="panel-section" id="editorForm" hidden>
+        <h3 id="formTitle">区域</h3>
+        <div class="form">
+          <label>唯一编号 <span class="req">*</span>
+            <input type="text" id="fCode" maxlength="64" placeholder="如 A-101">
+          </label>
+          <label>风险等级 <span class="req">*</span>
+            <select id="fRisk">
+              <option value="">请选择…</option>
+              <option value="低风险">低风险</option>
+              <option value="中风险">中风险</option>
+              <option value="高风险">高风险</option>
+            </select>
+          </label>
+          <div class="meta-row">
+            <span id="fBaseVersion" class="badge"></span>
+            <span id="fVertCount" class="badge"></span>
+          </div>
+          <div id="fValidate" class="validate-msg"></div>
+          <div class="btn-row">
+            <button class="btn primary" id="btnSave">保存区域</button>
+            <button class="btn" id="btnFinish" hidden>完成绘制</button>
+            <button class="btn danger" id="btnDelete">删除</button>
+            <button class="btn" id="btnCancel">取消</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section grow">
+        <h3>区域列表 <span id="regionCount" class="muted"></span></h3>
+        <ul id="regionList" class="region-list"></ul>
+      </div>
+
+      <div class="panel-section">
+        <button class="btn wide" id="btnExport">⬇ 导出整图 JSON（含原图与全部区域）</button>
+      </div>
+    </aside>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+            <rect width="50" height="50" fill="#ffffff"></rect>
+            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#e5e7eb" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <g id="viewport">
+          <rect id="bgRect" x="0" y="0" fill="url(#grid)"></rect>
+          <image id="planImage" x="0" y="0"></image>
+          <g id="regionLayer"></g>
+          <g id="draftLayer"></g>
+        </g>
+      </svg>
+      <div class="canvas-status">
+        <span id="cursorPos"></span>
+        <span id="zoomLevel"></span>
+      </div>
+      <div id="conflictBanner" class="banner hidden"></div>
+    </div>
+  </main>
+
+  <div id="toasts" class="toasts"></div>
+
+  <script src="/shared/geometry.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

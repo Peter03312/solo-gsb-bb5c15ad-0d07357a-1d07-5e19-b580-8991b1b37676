@@ -1,0 +1,19 @@
+{
+  "name": "hall-plan-annotator",
+  "version": "1.0.0",
+  "description": "展馆平面图协作标注 Web 应用：Node.js + SQLite + 浏览器 SVG，本地运行，无需第三方账号",
+  "main": "server/app.js",
+  "scripts": {
+    "start": "node server/app.js",
+    "migrate": "node server/db.js",
+    "test": "node tests/geometry.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}

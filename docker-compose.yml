@@ -1,0 +1,29 @@
+# 展馆平面图协作标注 —— 一键启动
+# 使用：docker compose up -d --build
+services:
+  annotator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hall-plan-annotator:latest
+    container_name: hall-plan-annotator
+    ports:
+      # 宿主机端口:容器端口；宿主机 8080 被占用时改为如 "18080:8080"
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      # 所有配置均有默认值，可按需覆盖
+      DATA_DIR: /data
+      HOST: 0.0.0.0
+      PORT: 8080
+      # 上传原图大小上限（MB）；导出 JSON 含 base64 图片，导入上限会自动再加 16MB
+      MAX_UPLOAD_MB: "30"
+    volumes:
+      # 数据库与上传原图持久化到宿主机 ./data
+      - ./data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8080/api/plans',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
